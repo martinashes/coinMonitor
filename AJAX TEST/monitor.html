@@ -1,0 +1,260 @@
+<link href="css/bootstrap.css" rel="stylesheet">
+<script src="js/bootstrap/bootstrap.js"></script>
+<script src="https://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>马丁的监控页面</title>
+
+<script>
+$(document).ready(function () {
+setInterval("startRequest()",5000); //建议使用setTimeout
+});
+
+function startRequest(){
+$("#btcprice").load("test.txt #btcprice");
+$("#ethprice").load("test.txt #ethprice");
+$("#okbprice").load("test.txt #okbprice");
+$("#usdtprice").load("test.txt #usdtprice");
+$("#usdtpremium").load("test.txt #usdtpremium");
+$("#usdtpremiumprect").load("test.txt #usdtpremiumprect");
+$("#btcratio").load("test.txt #btcratio");
+$("#lowerline").load("test.txt #lowerline");
+$("#upperline").load("test.txt #upperline");
+$("#btcfuturevolume").load("test.txt #btcfuturevolume");
+$("#btcfuturevolumechange").load("test.txt #btcfuturevolumechange");
+
+$.ajax({
+   url:"future.csv",
+   dataType:"text",
+   success:function(data)
+   {
+    var future_data = data.split(/\r?\n|\r/);
+    var table_data = '<table class="table table-bordered table-striped">';
+    for(var count = 0; count<future_data.length; count++)
+    {
+     var cell_data = future_data[count].split(",");
+     table_data += '<tr>';
+     for(var cell_count=0; cell_count<cell_data.length; cell_count++)
+     {
+      if(count === 0)
+      {
+       table_data += '<th>'+cell_data[cell_count]+'</th>';
+      }
+      else
+      {
+       table_data += '<td>'+cell_data[cell_count]+'</td>';
+      }
+     }
+     table_data += '</tr>';
+    }
+    table_data += '</table>';
+    $('#future_data').html(table_data);
+   }
+  });
+}
+
+</script>
+</head>
+<body>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-4 column">
+			<h3>
+				| 现货部分
+			</h3>
+			<div class="row clearfix">
+				<div class="col-md-4 column bg-primary">
+                  	<h5>
+						BTC价格
+					</h5>
+                  	<h3 id="btcprice">
+                  	</h3>
+                  </h5>
+				</div>
+				<div class="col-md-4 column  bg-primary">
+                    <h5>
+						ETH价格
+					</h5>
+                  	<h3 id="ethprice">
+                  	</h3>
+				</div>
+				<div class="col-md-4 column  bg-primary">
+                	<h5>
+						OKB价格
+					</h5>
+                  	<h3 id="okbprice">
+                  	</h3>
+				</div>
+			</div>
+			<div class="row clearfix">
+				<div class="col-md-4 column  bg-primary">
+					<h5>
+						USDT价格
+					</h5>
+                  	<h3 id="usdtprice">
+                  	</h3>
+				</div>
+				<div class="col-md-4 column bg-primary">
+					<h5>
+						USDT溢价
+					</h5>
+                  	<h3 id="usdtpremium">
+                  	</h3>
+				</div>
+				<div class="col-md-4 column bg-primary">
+					<h5>
+						USDT溢价 %
+					</h5>
+                  	<h3 id="usdtpremiumprect">
+                  	</h3>
+				</div>
+			</div>
+			<div class="row clearfix">
+				<div class="col-md-12 column">
+					<div class="row clearfix">
+						<div class="col-md-4 column bg-primary" >
+									<h5>
+										BTC期货多空比
+									</h5>
+				                  	<h3 id="btcratio">
+				                  	</h3>
+						</div>
+						<div class="col-md-8 column">
+				                  	<h5 id="lowerline" class="text-success">
+				                  	</h5>
+				                  	<h5 id="upperline" class="text-danger">
+				                  	</h5>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row clearfix">
+				<div class="col-md-12 column">
+					<div class="row clearfix">
+						<div class="col-md-4 column bg-primary">
+									<h5>
+										BTC期货持仓量(张)
+									</h5>
+				                  	<h3 id="btcfuturevolume">
+				                  	</h3>
+						</div>
+						<div class="col-md-4 column bg-primary">
+									<h5>
+										变化 %
+									</h5>
+				                  	<h3 id="btcfuturevolumechange">
+				                  	</h3>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4 column">
+			<h3>
+				| 期现套利
+			</h3>
+			<div id="future_data">
+			</div>		
+		</div>
+		<div class="col-md-4 column">
+			<h3>
+				| 期权合约
+			</h3>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>
+							编号
+						</th>
+						<th>
+							产品
+						</th>
+						<th>
+							交付时间
+						</th>
+						<th>
+							状态
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							1
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							01/04/2012
+						</td>
+						<td>
+							Default
+						</td>
+					</tr>
+					<tr class="success">
+						<td>
+							1
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							01/04/2012
+						</td>
+						<td>
+							Approved
+						</td>
+					</tr>
+					<tr class="error">
+						<td>
+							2
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							02/04/2012
+						</td>
+						<td>
+							Declined
+						</td>
+					</tr>
+					<tr class="warning">
+						<td>
+							3
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							03/04/2012
+						</td>
+						<td>
+							Pending
+						</td>
+					</tr>
+					<tr class="info">
+						<td>
+							4
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							04/04/2012
+						</td>
+						<td>
+							Call in to confirm
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<h3 id="btcprice">7507.3</h3>
+<h3 id="ethprice">187.51</h3>
+<h3 id="okbprice">4.891</h3>
+<h3 id="usdtprice">7.13</h3>
+<h3 id="usdtpremium">0.06</h3>
+<h3 id="usdtpremiumprect">0.85%</h3>
+<h3 id="btcratio">1.26</h3>
+<h3 id="lowerline">Buy at 0.89</h3>
+<h3 id="upperline">Sell at 1.69</h3>
+<h3 id="btcfuturevolume">4664476</h3>
+<h3 id="btcfuturevolumechange">0.24%</h3>
