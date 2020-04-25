@@ -1,19 +1,15 @@
-import sys
-import os
+#!/usr/bin/python
+#coding:utf-8
+
 import requests
 import time
-import threading
-# import pymysql
-import logging
-import time
-from datetime import datetime
-from datetime import date
 import pandas as pd
-# import prettytable as pt
 from requests import exceptions
+from datetime import datetime
 
 
 def geturl(url):
+    # print('开始' + url)
     requests.adapters.DEFAULT_RETRIES = 1
     s = requests.session()
     s.keep_alive = False
@@ -22,6 +18,7 @@ def geturl(url):
         response = requests.get(url, timeout=10)
         t2 = time.time()
     except exceptions.RequestException as e:
+        print('失败重试' + url)
         geturl(url)
     except exceptions.HTTPError as e:
         print("http错误")
@@ -32,6 +29,7 @@ def geturl(url):
     else:
         # print('请求耗时%ss' % (t2 - t1))
         if response.status_code == 200:
+            # print('结束' + url)
             json_r = response.json()
             return json_r
         else:
@@ -48,26 +46,24 @@ def get_contract_info():
     i = 0
     url = 'https://www.okex.com/api/futures/v3/instruments'
     json_r = geturl(url)
-    if not (json_r is None):
-        while i < len(json_r):
-            if json_r[i]["quote_currency"] == "USD":
-                codeId.append(json_r[i]["instrument_id"])
-                alias.append(json_r[i]["alias"])
-                delivery_date = datetime.strptime(json_r[i]["delivery"], '%Y-%m-%d')
+
+    if json_r:
+        for info in json_r:
+            if info['quote_currency'] == 'USD':
+                codeId.append(info['instrument_id'])
+                alias.append(info['alias'])
+                delivery_date = datetime.strptime(info['delivery'], '%Y-%m-%d')
                 interval = float((delivery_date - today).days)
                 if interval == 0:
                     interval = 1
                 delivery.append(interval)
-                base_currency.append(json_r[i]["base_currency"])
-            i = i + 1
-        # dataframe = pd.DataFrame({'Contract ID': codeId, 'Code': alias, 'Delivery Date': delivery, 'Base Currency': base_currency})
-        # dataframe.to_csv(r"C:\Users\marti\PycharmProjects\monitor\venv\future.csv", sep=',')
-
+                base_currency.append(info['base_currency'])
         return codeId, alias, delivery, base_currency
 
 
+
 # 获取合约币种现货价格并生成词典
-def get_spot_price():
+def get_spot_price(codeId, alias, delivery, base_currency):
     instrument_id = ['BTC', 'LTC', 'ETH', 'ETC', 'XRP', 'EOS', 'BCH', 'BSV', 'TRX']
     i = 0
     j = 0
@@ -80,7 +76,6 @@ def get_spot_price():
             dict[instrument_id[i]] = float(json_r[0]["price"])
             i = i + 1
 
-    codeId, alias, delivery, base_currency = get_contract_info()
     while j < len(base_currency):
         spot_price.append(dict[base_currency[j]])
         j = j + 1
@@ -88,40 +83,36 @@ def get_spot_price():
 
 
 # 获取每个合约的价格
-def get_future_price():
-    codeId, alias, delivery, base_currency = get_contract_info()
-    i = 0
+def get_future_price(codeId, alias, delivery, base_currency):
     future_price = []
-    while i < len(codeId):
-        url = 'https://www.okex.com/api/futures/v3/instruments/' + codeId[i] + '/ticker'
+    for ticker_id in codeId:
+        url = 'https://www.okex.com/api/futures/v3/instruments/' + ticker_id + '/ticker'
         json_r = geturl(url)
         if not (json_r is None):
             future_price.append(float(json_r["last"]))
-        i = i + 1
     return future_price
 
 
 # 计算合约溢价及溢价百分比
-def calculate_premium():
-    future_price = get_future_price()
-    spot_price = get_spot_price()
-    codeId, alias, delivery, base_currency = get_contract_info()
+def calculate_premium(codeId, alias, delivery, base_currency):
+    future_price = get_future_price(codeId, alias, delivery, base_currency)
+    spot_price = get_spot_price(codeId, alias, delivery, base_currency)
     premium = []
     premium_in_perct = []
     annualized_return = []
     #四次买卖手续费损失
     fee = (1-0.0015) * (1-0.0015) * (1-0.0005) * (1-0.0005)
-    i = 0
-    while i < len(future_price):
-        diff = future_price[i] - spot_price[i]
+
+    for index in range(len(future_price)):
+        diff = future_price[index] - spot_price[index]
         if abs(diff) < 1:
             diff = round(diff, 4)
         else:
             diff = round(diff, 1)
         premium.append(diff)
-        premium_in_perct.append(round(((future_price[i] - spot_price[i])/spot_price[i]*fee*100), 1))
-        annualized_return.append(round((future_price[i] - spot_price[i])/spot_price[i]*fee*100/delivery[i]*365, 1))
-        i = i + 1
+        premium_in_perct.append(round(diff/spot_price[index]*fee*100, 2))
+        annualized_return.append(round(diff/spot_price[index]*fee*100/delivery[index]*365, 1))
+
     return premium, premium_in_perct, annualized_return
 
 
@@ -165,7 +156,7 @@ def to_txt():
         prebtcfuturevolume = int(json_r7["data"]["openInterests"][-2])
         btcfuturevolumechange = round((btcfuturevolume - prebtcfuturevolume) * 100 / prebtcfuturevolume, 2)
 
-        file = r'C:\Users\marti\Documents\AJAX TEST\test.txt'
+        file = r'/Users/luanjieke/coinMonitor/AJAX TEST/test.txt'
         with open(file, 'w+') as f:
             f.write("<h3 id=\"btcprice\">" + btcprice + "</h3>" + "\n" +
                     "<h3 id=\"ethprice\">" + ethprice + "</h3>" + "\n" +
@@ -204,9 +195,9 @@ def print_table():
 def export_to_csv():
     print("%s 开始CSV线程" % time.ctime())
     codeId, alias, delivery, base_currency = get_contract_info()
-    premium, premium_in_perct, annualized_return = calculate_premium()
-    future_price = get_future_price()
-    spot_price = get_spot_price()
+    premium, premium_in_perct, annualized_return = calculate_premium(codeId, alias, delivery, base_currency)
+    future_price = get_future_price(codeId, alias, delivery, base_currency)
+    spot_price = get_spot_price(codeId, alias, delivery, base_currency)
     if len(codeId) * 6 == (len(alias) + len(future_price) + len(spot_price) + len(premium) + len(premium_in_perct) + len(annualized_return)):
 
         df = pd.DataFrame()
@@ -219,7 +210,7 @@ def export_to_csv():
         df['annual%'] = annualized_return
 
         df.set_index('code', inplace=True)
-        df.to_csv(r'C:\Users\marti\Documents\AJAX TEST\future.csv')
+        df.to_csv(r'/Users/luanjieke/coinMonitor/AJAX TEST/future.csv')
         print("%s csv完成" % time.ctime())
     else:
         print("%s 数据不完整" % time.ctime())
@@ -239,5 +230,5 @@ def csv_loop():
 # export_to_csv()
 # to_txt()
 txt_loop()
-
+# export_to_csv()
 
