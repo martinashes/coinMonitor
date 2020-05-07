@@ -124,7 +124,7 @@ def to_txt():
     # huobi法币交易盘口价格
     url_4 = 'https://otc-api.eiijo.cn/v1/data/trade-market?coinId=2&currency=1&tradeType=sell&currPage=1&payMethod=0&country=37&blockType=general&online=1'
     # USD汇率
-    url_5 = 'http://www.apilayer.net/api/live?access_key=2fc9d3a4761e1c3cacbd2f6e0f6f205f&format=1&currencies=CNY'
+    url_5 = 'https://www.okex.com/api/futures/v3/rate'
     # 多空比数据 type 0-5分钟 1-1小时 2-24小时
     url_6 = 'https://www.okex.com/v3/futures/pc/market/longShortPositionRatio/BTC?t=&unitType=0'
     # 持仓量及交易量数据
@@ -144,13 +144,13 @@ def to_txt():
         okbprice = json_r3[0]["price"]
 
         usdtprice = float(json_r4['data'][0]['price'])
-        usdprice = float(json_r5["quotes"]["USDCNY"])
+        usdprice = float(json_r5["rate"])
         usdtpremium = round(usdtprice - usdprice, 2)
         usdtpremiumprect = round((usdtpremium / usdprice) * 100, 2)
 
         btcratio = json_r6["data"]["ratios"][-1]
-        lowerline = 0.89
-        upperline = 1.69
+        lowerline = 0.99
+        upperline = 1.54
 
         btcfuturevolume = int(json_r7["data"]["openInterests"][-1])
         prebtcfuturevolume = int(json_r7["data"]["openInterests"][-2])
